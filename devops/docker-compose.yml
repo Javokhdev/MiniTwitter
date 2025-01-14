@@ -1,0 +1,29 @@
+services:
+  udevslabs-twitterdb:
+    image: postgres:latest
+    container_name: udevslabs-twitterdb
+    environment:
+      POSTGRES_USER: udevslabs-twitterdb
+      POSTGRES_PASSWORD: udevslabs-twitterdb_secret
+      POSTGRES_DB: udevslabs-twitterdb
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - udevslabs-twitter
+
+  udevslabs-twitter-redis:
+    image: redis:latest
+    container_name: udevslabs-twitter-redis
+    ports:
+      - "6378:6379"
+    networks:
+      - udevslabs-twitter
+      
+networks:
+  udevslabs-twitter: 
+    external: true
+
+volumes:
+  postgres_data:

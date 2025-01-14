@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    container_name: udevslabs-twitter
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+    networks:
+      - udevslabs-twitter
+
+
+networks:
+  udevslabs-twitter: 
+    external: true
+

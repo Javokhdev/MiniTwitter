@@ -1,0 +1,924 @@
+basePath: /v1
+definitions:
+  entity.Attachment:
+    properties:
+      content_type:
+        type: string
+      created_at:
+        type: string
+      filepath:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entity.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  entity.Follower:
+    properties:
+      followed:
+        type: boolean
+      follower_id:
+        type: string
+      follwing_id:
+        type: string
+    type: object
+  entity.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      platform:
+        type: string
+      username:
+        type: string
+    type: object
+  entity.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  entity.Session:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      is_active:
+        type: boolean
+      last_active_at:
+        type: string
+      platform:
+        type: string
+      updated_at:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  entity.SessionList:
+    properties:
+      count:
+        type: integer
+      sessions:
+        items:
+          $ref: '#/definitions/entity.Session'
+        type: array
+    type: object
+  entity.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  entity.Tag:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      level:
+        type: integer
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entity.TagList:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/entity.Tag'
+        type: array
+    type: object
+  entity.Tweet:
+    properties:
+      attachments:
+        items:
+          $ref: '#/definitions/entity.Attachment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      owner:
+        $ref: '#/definitions/entity.User'
+      status:
+        type: string
+      tags:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      updated_at:
+        type: string
+    type: object
+  entity.TweetList:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/entity.Tweet'
+        type: array
+    type: object
+  entity.User:
+    properties:
+      access_token:
+        type: string
+      avatar_id:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_role:
+        type: string
+      user_type:
+        type: string
+      username:
+        type: string
+    type: object
+  entity.UserList:
+    properties:
+      count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/entity.User'
+        type: array
+    type: object
+  entity.VerifyEmail:
+    properties:
+      email:
+        type: string
+      otp:
+        type: string
+      platform:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server Go Clean Template server.
+  title: Go Clean Template API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      parameters:
+      - description: User
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      parameters:
+      - description: User
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Register
+      tags:
+      - auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      parameters:
+      - description: User
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.VerifyEmail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Register
+      tags:
+      - auth
+  /follower:
+    post:
+      consumes:
+      - application/json
+      description: Create/Delete a follower
+      parameters:
+      - description: Follower object
+        in: body
+        name: follower
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Follower'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Follower'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create/Delete a follower
+      tags:
+      - follower
+  /follower/list:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of followers
+      parameters:
+      - description: page
+        in: query
+        name: page
+        required: true
+        type: number
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: number
+      - description: following_id
+        in: query
+        name: following_id
+        type: string
+      - description: search
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.UserList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a list of followers
+      tags:
+      - follower
+  /session:
+    put:
+      consumes:
+      - application/json
+      description: Update a session
+      parameters:
+      - description: Session object
+        in: body
+        name: session
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Session'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Session'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a session
+      tags:
+      - session
+  /session/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a session
+      tags:
+      - session
+    get:
+      consumes:
+      - application/json
+      description: Get a session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Session'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a session by ID
+      tags:
+      - session
+  /session/list:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users
+      parameters:
+      - description: page
+        in: query
+        name: page
+        required: true
+        type: number
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: number
+      - description: user_id
+        in: query
+        name: user_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SessionList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a list of users
+      tags:
+      - session
+  /tag:
+    post:
+      consumes:
+      - application/json
+      description: Create a tag
+      parameters:
+      - description: Tag object
+        in: body
+        name: tag
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Tag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Tag'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a tag
+      tags:
+      - tag
+    put:
+      consumes:
+      - application/json
+      description: Update a tag
+      parameters:
+      - description: Tag object
+        in: body
+        name: tag
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Tag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Tag'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a tag
+      tags:
+      - tag
+  /tag/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a tag
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a tag
+      tags:
+      - tag
+    get:
+      consumes:
+      - application/json
+      description: Get a tag by ID
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Tag'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a tag by ID
+      tags:
+      - tag
+  /tag/list:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users
+      parameters:
+      - description: page
+        in: query
+        name: page
+        required: true
+        type: number
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: number
+      - description: search
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.TagList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a list of users
+      tags:
+      - tag
+  /tweet:
+    post:
+      consumes:
+      - application/json
+      description: Create a new tweet
+      parameters:
+      - description: Tweet object
+        in: body
+        name: tweet
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Tweet'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.Tweet'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new tweet
+      tags:
+      - tweet
+    put:
+      consumes:
+      - application/json
+      description: Update a tweet
+      parameters:
+      - description: Tweet object
+        in: body
+        name: tweet
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Tweet'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Tweet'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a tweet
+      tags:
+      - tweet
+  /tweet/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a tweet
+      parameters:
+      - description: Tweet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a tweet
+      tags:
+      - tweet
+    get:
+      consumes:
+      - application/json
+      description: Get a tweet by ID
+      parameters:
+      - description: Tweet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Tweet'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a tweet by ID
+      tags:
+      - tweet
+  /tweet/list:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of tweets
+      parameters:
+      - description: page
+        in: query
+        name: page
+        required: true
+        type: number
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: number
+      - description: search
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.TweetList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a list of tweets
+      tags:
+      - tweet
+  /user:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Update a user
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a user
+      tags:
+      - user
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a user
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Get a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a user by ID
+      tags:
+      - user
+  /user/list:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users
+      parameters:
+      - description: page
+        in: query
+        name: page
+        required: true
+        type: number
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: number
+      - description: search
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.UserList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a list of users
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
