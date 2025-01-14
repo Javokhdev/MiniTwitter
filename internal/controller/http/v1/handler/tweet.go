@@ -179,36 +179,49 @@ func (h *Handler) GetTweets(ctx *gin.Context) {
 // @Success 200 {object} entity.Tweet
 // @Failure 400 {object} entity.ErrorResponse
 func (h *Handler) UpdateTweet(ctx *gin.Context) {
-	var (
-		body entity.Tweet
-	)
+    var (
+        body entity.Tweet
+    )
 
-	err := ctx.ShouldBindJSON(&body)
-	if err != nil {
-		h.ReturnError(ctx, config.ErrorBadRequest, "Invalid request body", 400)
-		return
-	}
+    // Parse request body
+    err := ctx.ShouldBindJSON(&body)
+    if err != nil {
+        h.ReturnError(ctx, config.ErrorBadRequest, "Invalid request body", 400)
+        return
+    }
 
-	if body.Owner.ID != ctx.GetHeader("sub") {
-		h.ReturnError(ctx, config.ErrorForbidden, "You have no access to the tweet", http.StatusForbidden)
-		return
-	}
+    // Validate ownership
+    if body.Owner.ID != ctx.GetHeader("sub") {
+        h.ReturnError(ctx, config.ErrorForbidden, "You have no access to the tweet", http.StatusForbidden)
+        return
+    }
 
-	tweet, err := h.UseCase.TweetRepo.Update(ctx, body)
-	if h.HandleDbError(ctx, err, "Error updating tweet") {
-		return
-	}
+    // Tag the tweet content
+    taggedTweet, err := h.UseCase.TagRepo.TagTweetByContent(ctx, body)
+    if err != nil {
+        h.ReturnError(ctx, config.ErrorInternalServer, "Error tagging tweet", 500)
+        return
+    }
 
-	tweet.Attachments, err = h.UseCase.TweetAttachmentsRepo.MultipleUpsert(ctx, entity.AttachmentMultipleInsertRequest{
-		TweetId:     tweet.Id,
-		Attachments: body.Attachments,
-	})
-	if h.HandleDbError(ctx, err, "Error upserting tweet attachments") {
-		return
-	}
+    // Update the tweet in the database
+    tweet, err := h.UseCase.TweetRepo.Update(ctx, taggedTweet)
+    if h.HandleDbError(ctx, err, "Error updating tweet") {
+        return
+    }
 
-	ctx.JSON(200, tweet)
+    // Upsert tweet attachments
+    tweet.Attachments, err = h.UseCase.TweetAttachmentsRepo.MultipleUpsert(ctx, entity.AttachmentMultipleInsertRequest{
+        TweetId:     tweet.Id,
+        Attachments: body.Attachments,
+    })
+    if h.HandleDbError(ctx, err, "Error upserting tweet attachments") {
+        return
+    }
+
+    // Return the updated tweet
+    ctx.JSON(200, tweet)
 }
+
 
 // DeleteTweet godoc
 // @Router /tweet/{id} [delete]

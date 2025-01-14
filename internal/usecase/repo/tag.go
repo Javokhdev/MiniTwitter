@@ -3,12 +3,15 @@ package repo
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
+
 	"time"
 
 	"github.com/golanguzb70/udevslabs-twitter/config"
 	"github.com/golanguzb70/udevslabs-twitter/internal/entity"
-	"github.com/golanguzb70/udevslabs-twitter/pkg/gemini"
+
+	gemini "github.com/golanguzb70/udevslabs-twitter/pkg/gemini"
 	"github.com/golanguzb70/udevslabs-twitter/pkg/logger"
 	"github.com/golanguzb70/udevslabs-twitter/pkg/postgres"
 	"github.com/google/uuid"
@@ -241,35 +244,33 @@ func (r *TagRepo) TagTweetByContent(ctx context.Context, req entity.Tweet) (enti
 	}
 
 	// 3. Use AI to get relevant tags (Level 2)
-	level2Tags, err := gemini.GetTagsFromAI(ctx, req.Content)
+	aiTags, err := gemini.AskFromGemeni(req.Content, categories)
 	if err != nil {
-		return entity.Tweet{}, fmt.Errorf("AI error: %w", err)
+		log.Printf("AI error: %v", err) // Log AI errors but don't fail entirely
+		aiTags = []string{}
 	}
 
-	// Filter Level 2 tags to include only those matching categories
-	filteredLevel2Tags := []string{}
-	for _, tag := range level2Tags {
-		if categoryMap[tag] { // Only include tags that match categories
-			filteredLevel2Tags = append(filteredLevel2Tags, tag)
+	// Filter AI tags to include only those matching categories
+	filteredAITags := []string{}
+	for _, tag := range aiTags {
+		if categoryMap[tag] {
+			filteredAITags = append(filteredAITags, tag)
 		}
 	}
 
-	// If no tags match categories, use a default tag
-	if len(filteredLevel2Tags) == 0 {
-		filteredLevel2Tags = []string{"default_tag"}
+	// Use a default tag if no tags are matched
+	if len(filteredAITags) == 0 {
+		filteredAITags = []string{"default_tag"}
 	}
 
-	// 4. Store tags in a structured format
+	// 4. Combine all tags into a structured format
 	tags := map[string][]string{
-		"level1": {req.Owner.ID},   // Owner ID as Level 1 tag
-		"level2": filteredLevel2Tags, // Filtered AI-generated tags as Level 2
-		"level3": level3Tags,        // Extracted hashtags as Level 3
+		"level1": {req.Owner.ID}, // Owner ID as Level 1 tag
+		"level2": filteredAITags, // Filtered AI-generated tags as Level 2
+		"level3": level3Tags,     // Extracted hashtags as Level 3
 	}
 
 	// 5. Return the tweet object with the tags
-	return entity.Tweet{
-		Tags: tags,
-	}, nil
+	req.Tags = tags
+	return req, nil
 }
-
-

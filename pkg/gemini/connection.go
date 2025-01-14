@@ -1,118 +1,107 @@
 package gemini
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
-	"strconv"
+	"log"
+	"net/http"
+	// "os"
 	"strings"
-	"time"
-	"unicode"
 
-	genai "github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
+	// "github.com/joho/godotenv"
 )
 
-// AIResponse structure
-type AIResponse struct {
-	Candidates []struct {
-		Content string `json:"content"`
-	} `json:"candidates"`
+
+type Candidate struct {
+	Content struct {
+		Parts []struct {
+			Text string `json:"text"`
+		} `json:"parts"`
+	} `json:"content"`
 }
 
-// Helper function to retrieve the Gemini API key
-func getGeminiAPIKey() (string, error) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		return "", errors.New("API key is not set in environment variables")
+type Response struct {
+	Candidates []Candidate `json:"candidates"`
+}
+
+type RequestBody struct {
+	Contents []struct {
+		Parts []struct {
+			Text string `json:"text"`
+		} `json:"parts"`
+	} `json:"contents"`
+}
+
+func AskFromGemeni(content string, defaultTags []string) ([]string, error) {
+	// .env faylni yuklash
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatalf("Error loading .env file: %v", err)
+	// }
+
+	// API kalitni .env fayldan olish
+	// GEMINI_API_KEY := os.Getenv("GEMINI_API_KEY")
+	// if GEMINI_API_KEY == "" {
+	// 	log.Fatal("GEMINI_API_KEY is not set in .env file")
+	// }
+
+	GEMINI_API_KEY := "AIzaSyDq_FBhkbg5XXTNb0uL8TfpcHEO786K69M"
+
+	// API URL
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", GEMINI_API_KEY)
+
+	// Prompt yaratish
+	promt := fmt.Sprintf("Given the content: '%s', which of the following tags are most relevant? %v. Just write only tags", content, defaultTags)
+
+	// So‘rov body tayyorlash
+	requestBody := RequestBody{
+		Contents: []struct {
+			Parts []struct {
+				Text string `json:"text"`
+			} `json:"parts"`
+		}{
+			{
+				Parts: []struct {
+					Text string `json:"text"`
+				}{
+					{Text: promt},
+				},
+			},
+		},
 	}
-	return apiKey, nil
-}
 
-// sanitizeContent removes special characters, emojis, and non-ASCII characters
-func sanitizeContent(content string) string {
-	var sanitizedContent []rune
+	// JSONga o‘girish
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	for _, r := range content {
-		if r <= unicode.MaxASCII && unicode.IsPrint(r) && !unicode.IsSymbol(r) {
-			sanitizedContent = append(sanitizedContent, r)
+	// POST so‘rov yuborish
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	// Javobni tahlil qilish
+	var response Response
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Teglarni ajratish
+	if len(response.Candidates) > 0 && len(response.Candidates[0].Content.Parts) > 0 {
+		aiResponse := response.Candidates[0].Content.Parts[0].Text
+		matchedTags := []string{}
+		for _, tag := range defaultTags {
+			if strings.Contains(aiResponse, tag[1:]) {
+				matchedTags = append(matchedTags, tag)
+			}
 		}
+		return matchedTags, nil
 	}
 
-	return strings.TrimSpace(string(sanitizedContent))
-}
-
-func GetTagsFromAI(ctx context.Context, content string) ([]string, error) {
-	// Sanitize the content to ensure it only contains valid characters
-	sanitizedContent := sanitizeContent(content)
-
-	// Retrieve API key
-	apiKey, err := getGeminiAPIKey()
-	if err != nil {
-		return nil, err
-	}
-
-	// Create a new GenAI client
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
-	if err != nil {
-		return nil, fmt.Errorf("error creating GenAI client: %w", err)
-	}
-	defer client.Close()
-
-	// Configure the model with safety settings
-	model := client.GenerativeModel("gemini-1.5-flash")
-	model.SafetySettings = []*genai.SafetySetting{
-		{
-			Category:  genai.HarmCategoryHarassment,
-			Threshold: genai.HarmBlockOnlyHigh,
-		},
-		{
-			Category:  genai.HarmCategoryDangerousContent,
-			Threshold: genai.HarmBlockOnlyHigh,
-		},
-	}
-
-	// Construct the prompt
-	prompt := fmt.Sprintf("Extract relevant tags and hashtags for the following content: \"%s\"", sanitizedContent)
-
-	// Generate the response
-	timeoutCtx, cancel := context.WithTimeout(ctx, 40*time.Second)
-	defer cancel()
-	resp, err := model.GenerateContent(timeoutCtx, genai.Text(prompt))
-	if err != nil {
-		return nil, fmt.Errorf("error generating AI response: %w", err)
-	}
-
-	// Check for empty candidates or parts
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return []string{"default_tag"}, nil
-	}
-
-	// Extract the first part of the content
-	contentPart := resp.Candidates[0].Content.Parts[0]
-	temp, err := json.Marshal(contentPart)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling response content: %w", err)
-	}
-
-	// Convert the JSON to a plain string
-	unescapedData, err := strconv.Unquote(string(temp))
-	if err != nil {
-		return nil, fmt.Errorf("error unquoting response content: %w", err)
-	}
-
-	// Parse the tags from the unescaped string
-	tags := strings.Split(unescapedData, ",")
-	for i := range tags {
-		tags[i] = strings.TrimSpace(tags[i])
-	}
-
-	// Ensure at least one valid tag is present
-	if len(tags) == 0 {
-		tags = []string{"default_tag"}
-	}
-
-	return tags, nil
+	return []string{}, fmt.Errorf("no valid response from AI")
 }
