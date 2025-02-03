@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twitter-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twitter-app
+  template:
+    metadata:
+      labels:
+        app: twitter-app
+    spec:
+      containers:
+        - name: twitter-app
+          image: javohir7/udevslabs-twitter:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: twitter-env
+            - secretRef:
+                name: twitter-secrets

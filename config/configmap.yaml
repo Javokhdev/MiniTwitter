@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: twitter-env
+data:
+  PG_URL: "postgres://udevslabs-twitterdb:udevslabs-twitterdb_secret@postgres-service:5432/udevslabs-twitterdb"
+  REDIS_HOST: "redis-service"  # Change to match the service name
+  REDIS_PORT: "6379"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  EMAIL: "mirjalilovaferuza952@gmail.com"

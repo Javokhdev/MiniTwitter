@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twitter-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twitter-app
+  template:
+    metadata:
+      labels:
+        app: twitter-app
+    spec:
+      containers:
+        - name: twitter-app
+          image: javohir7/udevslabs-twitter:latest  # Replace with the actual Docker image for your Twitter app
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "postgres-service"  # Points to the postgres service
+            - name: DB_PORT
+              value: "5432"  # Default PostgreSQL port
+            - name: DB_USER
+              value: "udevslabs-twitterdb"  # PostgreSQL user
+            - name: DB_PASSWORD
+              value: "udevslabs-twitterdb_secret"  # PostgreSQL password
+            - name: DB_NAME
+              value: "udevslabs-twitterdb"  # PostgreSQL database name

@@ -193,7 +193,6 @@ definitions:
       platform:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: This is a sample server Go Clean Template server.
