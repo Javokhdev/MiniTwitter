@@ -1,0 +1,22 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: twitter-service
+  annotations:
+    networking.knative.dev/visibility: "external"  # PUBLIC QILISH
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/minScale: "1"
+    spec:
+      containers:
+        - image: javohir7/udevslabs-twitter:latest  # To‘g‘ri image nomi
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: twitter-env
+            - secretRef:
+                name: twitter-secrets
