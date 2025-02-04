@@ -46,7 +46,7 @@ func AskFromGemeni(content string, defaultTags []string) ([]string, error) {
 	// 	log.Fatal("GEMINI_API_KEY is not set in .env file")
 	// }
 
-	GEMINI_API_KEY := "AIzaSyDq_FBhkbg5XXTNb0uL8TfpcHEO786K69M"
+	GEMINI_API_KEY := ""
 
 	// API URL
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", GEMINI_API_KEY)
